@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Container, Title, TextArea, Button, Results, Select, Label } from "./styles";
+import {
+  Container,
+  Title,
+  TextArea,
+  Button,
+  Select,
+  Label,
+} from "./styles";
+
+const BACKEND_URL = "https://tradutor-lista.onrender.com";
 
 const languages = [
   { code: "en", label: "Inglês" },
@@ -10,16 +19,16 @@ const languages = [
 ];
 
 export default function App() {
-  const [text, setText] = useState(""); // texto com várias palavras
+  const [text, setText] = useState("");
   const [source, setSource] = useState("en");
   const [target, setTarget] = useState("pt");
-  const [results, setResults] = useState([]); // lista de traduções
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleTranslateList = async () => {
     const words = text
-      .split(/[\s,]+/) // separa por espaço ou vírgula
+      .split(/[\s,]+/)
       .map((w) => w.trim())
       .filter(Boolean);
 
@@ -30,9 +39,8 @@ export default function App() {
     setResults([]);
 
     try {
-      // Faz uma requisição para cada palavra
       const promises = words.map(async (word) => {
-        const res = await fetch("http://localhost:3000/translate", {
+        const res = await fetch(`${BACKEND_URL}/translate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -46,14 +54,14 @@ export default function App() {
         if (!res.ok) throw new Error(`Erro na tradução de "${word}"`);
 
         const data = await res.json();
-        return { original: word, translated: data.translatedText };
+        return { translated: data.translatedText };
       });
 
       const translatedWords = await Promise.all(promises);
       setResults(translatedWords);
     } catch (err) {
       setError("Falha na tradução. Tente novamente.");
-      console.error("Erro ao traduzir lista:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -93,20 +101,15 @@ export default function App() {
         {loading ? "Traduzindo..." : "Traduzir lista"}
       </Button>
 
-      <Results>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {results.length > 0 && (
-        <div style={{ textAlign: "left", marginTop: "1rem" }}>
-          <h3>Resultados:</h3>
-          <ol>
-            {results.map(({ translated }, i) => (
-              <li key={i}>{translated}</li>
-            ))}
-          </ol>
-        </div>
+        <ol style={{ textAlign: "left", marginTop: "1rem" }}>
+          {results.map(({ translated }, i) => (
+            <li key={i}>{translated}</li>
+          ))}
+        </ol>
       )}
-      </Results>
     </Container>
   );
 }
